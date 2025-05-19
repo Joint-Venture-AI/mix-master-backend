@@ -21,17 +21,17 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     # first_name = models.CharField(max_length=255)
     # last_name = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
-    nickname = models.CharField(max_length=255, blank=True)
+    nickname = models.CharField(max_length=255, blank=True, null=True)
     phone = PhoneNumberField(blank=True)
-    profile_image = models.ImageField(upload_to="media/user/profile_images/")
-    cover_image = models.ImageField(upload_to="media/user/cover_images/")
-    bio = models.TextField()
-    dob = models.DateField()
-    gender = models.CharField(max_length=10, choices=GenderChoices, blank=True)
-    country = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    address = models.TextField()
-    postal_code = models.IntegerField()
+    profile_image = models.ImageField(upload_to="media/user/profile_images/", blank=True)
+    cover_image = models.ImageField(upload_to="media/user/cover_images/", blank=True)
+    bio = models.TextField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GenderChoices, blank=True, null=True)
+    country = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    postal_code = models.CharField(blank=True, null=True)
     is_subscribed = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -40,6 +40,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     
     USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["name"]
     
     def __str__(self):
         return self.email
