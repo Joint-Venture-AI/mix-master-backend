@@ -10,7 +10,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.choices import StatusChoices
 from .models import EmailVerification, User
-from .serializers import ChangePasswordSerializer, LoginUserSerializer, RequestPasswordResetOTPSerializer, ResendVerificationCodeSerializer, SetNewPasswordSerializer, UserSerializer, VerifyEmailSerializer, VerifyOTPSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    LoginUserSerializer,
+    RequestPasswordResetOTPSerializer,
+    ResendVerificationCodeSerializer,
+    SetNewPasswordSerializer,
+    UserSerializer,
+    VerifyEmailSerializer,
+    VerifyOTPSerializer,
+)
 
 # Create your views here.
 
@@ -54,28 +63,37 @@ class ResendVerificationCodeView(generics.GenericAPIView):
         serializer = ResendVerificationCodeSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"detail": "Verification code resent."}, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": "Verification code resent."}, status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RequestPasswordResetOTPView(generics.GenericAPIView):
     serializer_class = RequestPasswordResetOTPSerializer
-    
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        
-        return Response({"details": "OTP sent successfully to your email."}, status=status.HTTP_200_OK)
-    
+
+        return Response(
+            {"details": "OTP sent successfully to your email."},
+            status=status.HTTP_200_OK,
+        )
+
+
 class VerifyOTPView(generics.GenericAPIView):
     serializer_class = VerifyOTPSerializer
-    
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "OTP verified successfully. You can now reset your password."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "OTP verified successfully. You can now reset your password."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class SetNewPasswordView(generics.GenericAPIView):
@@ -85,7 +103,10 @@ class SetNewPasswordView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Password has been reset successfully."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class RetrieveUpdateDestroyUserAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -131,7 +152,6 @@ class ChangeUserPasswordView(generics.UpdateAPIView):
     http_method_names = ["patch"]
     serializer_class = ChangePasswordSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_object(self):
         return self.request.user
-

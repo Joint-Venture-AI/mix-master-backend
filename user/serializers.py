@@ -115,8 +115,8 @@ class ResendVerificationCodeSerializer(serializers.Serializer):
         )
 
         return verification
-    
-    
+
+
 class RequestPasswordResetOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -131,7 +131,7 @@ class RequestPasswordResetOTPSerializer(serializers.Serializer):
 
         otp_entry = PasswordResetOtp.objects.create(user=user)
         otp = otp_entry.otp
-        
+
         send_mail(
             subject="Your Password Reset OTP",
             message=f"Your OTP for password reset is {otp}. It will expire in 5 minutes.",
@@ -139,36 +139,37 @@ class RequestPasswordResetOTPSerializer(serializers.Serializer):
             recipient_list=[email],
             fail_silently=False,
         )
-        
+
         return otp
-    
-    
+
+
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
-    
+
     def validate(self, attrs):
-        email = attrs.get('email')
-        otp = attrs.get('otp')
+        email = attrs.get("email")
+        otp = attrs.get("otp")
         try:
             user = User.objects.get(email=email)
-            otp_entry = PasswordResetOtp.objects.get(user=user, otp=otp, is_verified=False, is_used=False)
+            otp_entry = PasswordResetOtp.objects.get(
+                user=user, otp=otp, is_verified=False, is_used=False
+            )
         except (User.DoesNotExist, PasswordResetOtp.DoesNotExist):
             raise serializers.ValidationError("Invalid OTP or Email")
-        
+
         if otp_entry.is_expired:
             raise serializers.ValidationError("OTP has expired.")
-        
-        attrs['user'] = user
-        attrs['otp_entry'] = otp_entry
-        
+
+        attrs["user"] = user
+        attrs["otp_entry"] = otp_entry
+
         return attrs
-    
+
     def save(self):
-        otp_entry = self.validated_data['otp_entry']
+        otp_entry = self.validated_data["otp_entry"]
         otp_entry.is_verified = True
         otp_entry.save()
-        otp_entry.delete()
         return otp_entry
 
 
@@ -176,33 +177,37 @@ class SetNewPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
-    
+
     def validate(self, attrs):
-        email = attrs.get('email')
-        new_password = attrs.get('new_password')
-        confirm_password = attrs.get('confirm_password')
-        
+        email = attrs.get("email")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
         if new_password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
-        
+
         try:
             user = User.objects.get(email=email)
-            otp_entry = PasswordResetOtp.objects.filter(user=user, is_verified=True, is_used=False).latest('created_at')
+            otp_entry = PasswordResetOtp.objects.filter(
+                user=user, is_verified=True, is_used=False
+            ).latest("created_at")
         except (User.DoesNotExist, PasswordResetOtp.DoesNotExist):
-            raise serializers.ValidationError("OTP verification not completed for this user.")
-        
+            raise serializers.ValidationError(
+                "OTP verification not completed for this user."
+            )
+
         if otp_entry.is_expired:
             raise serializers.ValidationError("OTP has expired. Request a new OTP")
-        attrs['user'] = user
-        attrs['otp_entry'] = otp_entry
+        attrs["user"] = user
+        attrs["otp_entry"] = otp_entry
         return attrs
-    
+
     def save(self):
-        user = self.validated_data['user']
-        otp_entry = self.validated_data['otp_entry']
-        user.set_password(self.validated_data['new_password'])
+        user = self.validated_data["user"]
+        otp_entry = self.validated_data["otp_entry"]
+        user.set_password(self.validated_data["new_password"])
         user.save()
-        
+
         otp_entry.is_used = True
         otp_entry.save()
 
