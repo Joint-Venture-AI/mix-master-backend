@@ -1,17 +1,16 @@
 from rest_framework import serializers
 
-from .models import User
+from .models import User, EmailVerification
 
 
-
-class RegisterUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        
+# class RegisterUserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
 
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style={"input_type": "password"}, write_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -23,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
             "nickname",
             "phone",
             "profile_image",
-            "cover_iamge",
+            "cover_image",
             "bio",
             "dob",
             "gender",
@@ -38,16 +37,16 @@ class UserSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        
+
         read_only_fields = [
             "id",
             "uid",
             "is_active",
             "created_at",
             "updated_at",
-            "status"
+            "status",
         ]
-        
+
     def validate_email(self, value):
         """Check that the email is unique."""
         # If this is an update (instance exists), allow same email
@@ -58,8 +57,31 @@ class UserSerializer(serializers.ModelSerializer):
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
-    
-    
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=4)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data["email"])
+            verification = EmailVerification.objects.filter(
+                user=user, code=data["code"]
+            ).latest("created_at")
+        except (User.DoesNotExist, EmailVerification.DoesNotExist):
+            raise serializers.ValidationError("Invalid email or code.")
+
+        if verification.is_expired():
+            verification.delete()
+            raise serializers.ValidationError("The verification code has expired.")
+
+        user.is_active = True
+        user.save()
+        verification.delete()  # Optional cleanup
+        return data
+
+
 class LoginUserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(style={"input_type": "password"}, write_only=True)

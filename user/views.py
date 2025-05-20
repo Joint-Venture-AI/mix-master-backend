@@ -1,4 +1,7 @@
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from django.conf import settings
+
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
@@ -6,8 +9,8 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.choices import StatusChoices
-from .models import User
-from .serializers import LoginUserSerializer, UserSerializer
+from .models import EmailVerification, User
+from .serializers import LoginUserSerializer, UserSerializer, VerifyEmailSerializer
 
 # Create your views here.
 
@@ -25,19 +28,38 @@ class ListCreateUserAPIView(generics.ListCreateAPIView):
 
         return [permission() for permission in permission_classes]
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        # EmailVerification.objects
+        verification = EmailVerification.objects.create(user=user)
+        send_mail(
+            subject="Your verification code",
+            message=f"Your verification code is: {verification.code}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+        )
+
+
+class VerifyEmailView(generics.GenericAPIView):
+    serializer_class = VerifyEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({"detail": "Email verified successfully."})
+
 
 class RetrieveUpdateDestroyUserAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return self.request.user
-    
+
     def perform_destroy(self, instance):
         instance.status = StatusChoices.REMOVED
         instance.save()
-        
-        
+
 
 class LoginUserView(generics.GenericAPIView):
     serializer_class = LoginUserSerializer
@@ -59,9 +81,8 @@ class LoginUserView(generics.GenericAPIView):
 
         return Response(
             {
-                "refreshToken": str(refresh),
-                "accessToken": str(refresh.access_token),
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
             },
             status=status.HTTP_200_OK,
         )
-

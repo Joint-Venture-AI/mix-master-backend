@@ -1,3 +1,7 @@
+from datetime import timedelta
+from django.utils import timezone
+import random
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
@@ -15,7 +19,7 @@ from core.models import BaseModel
 
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
-    slug = AutoSlugField(populate_from = generate_user_slug, unique=True)
+    slug = AutoSlugField(populate_from=generate_user_slug, unique=True)
     # username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     # first_name = models.CharField(max_length=255)
@@ -23,27 +27,43 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     nickname = models.CharField(max_length=255, blank=True, null=True)
     phone = PhoneNumberField(blank=True)
-    profile_image = models.ImageField(upload_to="media/user/profile_images/", blank=True)
+    profile_image = models.ImageField(
+        upload_to="media/user/profile_images/", blank=True
+    )
     cover_image = models.ImageField(upload_to="media/user/cover_images/", blank=True)
     bio = models.TextField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=10, choices=GenderChoices, blank=True, null=True)
+    gender = models.CharField(
+        max_length=10, choices=GenderChoices, blank=True, null=True
+    )
     country = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     postal_code = models.CharField(blank=True, null=True)
     is_subscribed = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    
-    
+
     objects = UserManager()
-    
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
-    
+
     def __str__(self):
         return self.email
-    
 
 
+# user/models.py (continued)
+
+
+class EmailVerification(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=4)
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = str(random.randint(1000, 9999))
+        super().save(*args, **kwargs)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)

@@ -33,10 +33,12 @@ class UserManager(BaseUserManager, StatusManager):
         return user
 
     def IS_ACTIVE(self):
-        return super().IS_ACTIVE()
+        # return super().IS_ACTIVE()
+        return self.filter(is_active=True)
 
     def IS_INACTIVE(self):
-        return super().IS_INACTIVE()
+        # return super().IS_INACTIVE()
+        return self.filter(is_active=False)
 
     def IS_REMOVED(self):
         return super().IS_REMOVED()

@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-rjm5_8)%i+#ywd1@9+bh0wi0x7!1in36u=3!^by+#amx9f17!g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -44,10 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
 
-PROJECT_APPS = [
-    "core",
-    "user"
-]
+PROJECT_APPS = ["core", "user"]
 
 EXTERNAL_APPS = [
     "rest_framework",
@@ -151,6 +148,14 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "user.User"
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "akteruzzamandipto257@gmail.com"  # <-- your email
+EMAIL_HOST_PASSWORD = "vcvz mika koli jnzl"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 REST_FRAMEWORK = {
