@@ -49,8 +49,19 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
+    @classmethod
+    def joss_auth(cls, email:str, password: str) -> tuple[bool, str]:
+        user = cls.objects.filter(email=email).first()
+        if user is not None:
+            if user.check_password(password):
+                return True, 'Success'
+            return False, 'Invalid password'
+        return False, 'User not found'
+    
     def __str__(self):
         return self.email
+    
+    
 
 
 # user/models.py (continued)

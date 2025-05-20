@@ -12,12 +12,15 @@ from .views import (
     VerifyEmailView,
 )
 
+from . import views
+
 urlpatterns = [
     path("users", ListCreateUserAPIView.as_view()),
     path("user/verify", VerifyEmailView.as_view()),
     path("user/resend-verification-code", ResendVerificationCodeView.as_view()),
     path("user/me", RetrieveUpdateDestroyUserAPIView.as_view()),
     path("user/login", LoginUserView.as_view()),
+    path("user/token-refresh", views.TokenRefreshAPI.as_view()), 
     path("user/change-password", ChangeUserPasswordView.as_view()),
     path("user/request-password-reset-otp", RequestPasswordResetOTPView.as_view()),
     path("user/verify-otp", VerifyOTPView.as_view()),

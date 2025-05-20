@@ -5,9 +5,12 @@ from django.conf import settings
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
-
+from rest_framework import views
+from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from jossauth import models as joss_models
+from utils import lifetime
 from core.choices import StatusChoices
 from .models import EmailVerification, User
 from .serializers import (
@@ -141,15 +144,16 @@ class LoginUserView(generics.GenericAPIView):
                 {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
             )
 
-        refresh = RefreshToken.for_user(user)
-
-        return Response(
-            {
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            },
-            status=status.HTTP_200_OK,
-        )
+        token_bearer = RefreshToken.for_user(user)
+        access_token = str(token_bearer.access_token)
+        refresh_token = str(token_bearer)
+        response = {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'access_token_remaining_days': lifetime.get_token_lifetime_remaining_days(access_token) if access_token else 0,
+                'refresh_token_remaining_days': lifetime.get_token_lifetime_remaining_days(refresh_token) if refresh_token else 0,
+            }
+        return Response(response, status=status.HTTP_200_OK,)
 
 
 class ChangeUserPasswordView(generics.UpdateAPIView):
@@ -159,3 +163,51 @@ class ChangeUserPasswordView(generics.UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+# MUMIT
+# class LoginAPI(views.APIView):
+    
+#     def post(self, request: Request) -> Response:
+#         email, password = request.data.get('email'), request.data.get('password')
+#         authenticated, message = User.joss_auth(email, password)
+#         if authenticated:
+#             user = User.objects.get(email=email)
+#             token = joss_models.JossToken.objects.create(user=user)
+#             return Response(token.token_details, status=status.HTTP_200_OK)
+#         return Response(dict(error=message), status=status.HTTP_401_UNAUTHORIZED)
+
+class TokenRefreshAPI(views.APIView):
+    
+    def post(request: Request) -> Response:
+        refresh_token = request.data.get('refreshToken')
+        token_bearer = RefreshToken(refresh_token)
+        access_token = str(token_bearer.access_token)
+        refresh_token = str(token_bearer)
+        response = {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'access_token_remaining_days': lifetime.get_token_lifetime_remaining_days(access_token) if access_token else 0,
+                'refresh_token_remaining_days': lifetime.get_token_lifetime_remaining_days(refresh_token) if refresh_token else 0,
+            }
+        return Response(response, status=status.HTTP_200_OK)
+    
+
+# class JossTest(views.APIView):
+#     def get(self, request: Request) -> Response:
+#         try:
+#             from utils.operations import extract_auth_token
+#             token = extract_auth_token(request)
+#             from utils.lifetime import get_token_lifetime_remaining
+#             remaining = get_token_lifetime_remaining(token)
+
+#             return Response({'message': 'works', 'token': token, 'remaining_days': remaining}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({'message': 'does not work', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+# def joss_test(request):
+#     from django.http import JsonResponse
+#     print(request.headers)
+#     from utils.operations import extract_auth_token
+#     token = extract_auth_token(request)
+#     return JsonResponse({'message': 'works', 'access_token': token}, status=200)

@@ -1,3 +1,5 @@
 def extract_auth_token(request) -> str | None:
-    try:return request.headers.get('Authorization').split(' ')[1]
+    try:
+        token = request.headers.get('Authorization').split(' ')[1] 
+        return token
     except: return None

@@ -52,11 +52,11 @@ class JossToken(models.Model):
     
     @property
     def access_token_life_time_left_in_days(self):
-        return self.access_token_lifetime - self.remaining_days()
+        return self.access_token_lifetime - self.remaining_days
     
     @property
     def refresh_token_life_time_left_in_days(self):
-        return self.refresh_token_lifetime - self.remaining_days()
+        return self.refresh_token_lifetime - self.remaining_days
     
     @property
     def access_token_has_lifetime(self) -> bool:
@@ -65,6 +65,17 @@ class JossToken(models.Model):
     @property
     def refresh_token_has_lifetime(self) -> bool:
         return self.refresh_token_life_time_left_in_days >= 0
+    
+    @property
+    def token_details(self) -> dict:
+        return dict(
+            access_token=self.access_token,
+            refresh_token=self.refresh_token,
+            access_token_lifetime=self.access_token_lifetime,
+            refresh_token_lifetime=self.refresh_token_lifetime,
+            access_token_lifetime_left=self.access_token_life_time_left_in_days,
+            refresh_token_lifetime_left=self.refresh_token_life_time_left_in_days
+        )
     
     def save(self, *args, **kwargs) -> None:
         if not self.access_token: self.access_token = self.__generate_access_token()
