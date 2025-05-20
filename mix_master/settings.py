@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
 
-PROJECT_APPS = ["core", "user"]
+PROJECT_APPS = ["core", "user", 'jossauth']
 
 EXTERNAL_APPS = [
     "rest_framework",
