@@ -38,7 +38,11 @@ class ListCreateUserAPIView(generics.ListCreateAPIView):
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
+        password = serializer.validated_data.pop("password", None)
+        
         user = serializer.save()
+        user.set_password(password)
+        user.save()
         # EmailVerification.objects
         verification = EmailVerification.objects.create(user=user)
         send_mail(
