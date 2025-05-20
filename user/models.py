@@ -67,3 +67,23 @@ class EmailVerification(BaseModel):
 
     def is_expired(self):
         return timezone.now() > self.created_at + timedelta(minutes=5)
+    
+    
+class PasswordResetOtp(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=4)
+    is_verified = models.BooleanField(default=False)
+    is_used = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.otp:
+            self.otp = str(random.randint(0000, 9999))
+        
+        super().save(*args, **kwargs)
+    
+    @property        
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+    
+    def __str__(self):
+        return f"Email: {self.user.email} - OTP: {self.otp}"
